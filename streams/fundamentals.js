@@ -1,4 +1,4 @@
-import { Readable } from 'node:stream';
+import { Readable, Writable, Transform } from 'node:stream';
 
 class OneToHundredStream extends Readable {
     constructor(options) {
@@ -13,12 +13,28 @@ class OneToHundredStream extends Readable {
             if (i > 100) {
                 this.push(null);
             } else {
-                const buf = Buffer.from(String(i), 'utf-8'); 
+                const buf = Buffer.from(String(i), 'utf-8');
                 this.push(buf);
             }
         }, 1000);
     }
 }
 
+class InverseNumberStream extends Transform {
+    _transform(chunk, encoding, callback) {
+        const transformed = Number(chunk.toString()) * -1
+
+        callback(null, Buffer.from(String(transformed)))
+    }
+}
+
+class MultiplyByTenStream extends Writable {
+    _write(chunk, encoding, callback) {
+        console.log(Number(chunk.toString()) * 10)
+        callback()
+    }
+}
+
 new OneToHundredStream()
-    .pipe(process.stdout); 
+    .pipe(new InverseNumberStream())
+    .pipe(new MultiplyByTenStream()); 
